@@ -56,11 +56,11 @@
 
 ---
 
-### Never call DontDestroyOnLoad outside Bootstrap
+### Never call DontDestroyOnLoad anywhere
 
-**Rule:** `DontDestroyOnLoad` may only be called inside `Bootstrap.cs`.
+**Rule:** `DontDestroyOnLoad` must never be called in any script in this project.
 
-**Why:** Persistent objects must live in the Bootstrap scene. Any other script calling `DontDestroyOnLoad` creates an untracked persistent object that survives scene loads silently and is difficult to debug.
+**Why:** All persistent objects live in `Bootstrap.unity`, which is loaded at build index 0 and never unloaded — all other scenes load additively on top of it. The Bootstrap scene persists naturally without `DontDestroyOnLoad`. Calling it creates an untracked persistent object that is difficult to debug and violates the additive scene architecture.
 
 ---
 

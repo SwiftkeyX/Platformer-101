@@ -27,9 +27,9 @@ Bootstrap is invisible to the player. Its purpose is to guarantee that global sy
 ### Core Rules
 
 1. Bootstrap scene must be build index 0 — Unity loads it first on launch.
-2. `Bootstrap.cs` calls `DontDestroyOnLoad(gameObject)` in `Awake` — once and only here in the entire project.
-3. `Bootstrap.cs` instantiates `GameManager` and `SceneLoader` as new `GameObject` children in `Awake`, before any other script runs.
-4. Both `GameManager` and `SceneLoader` are held as private fields on `Bootstrap` and exposed via static properties on their own classes (set by their own `Awake`).
+2. Bootstrap scene is **never unloaded**. All subsequent scenes are loaded additively on top of it via `SceneLoader`. This is what makes its objects persistent — not `DontDestroyOnLoad`.
+3. `GameManager` and `SceneLoader` are placed in the Bootstrap scene as child GameObjects of the Bootstrap root **in the editor** — they are not instantiated at runtime. Their own `Awake` methods set `GameManager.Instance` and `SceneLoader.Instance`.
+4. `Bootstrap.cs` sets `Bootstrap.Instance` in `Awake`. It never calls `DontDestroyOnLoad` — that call is unnecessary and forbidden project-wide (see `unity-editor.md`).
 5. If `StartupScene` (Inspector field) is non-empty, Bootstrap calls `SceneLoader.LoadScene(StartupScene)` in `Start` — after all `Awake` calls have completed.
 6. If `StartupScene` is empty, Bootstrap does nothing after initialization — this is the valid state for Tier 1 testing.
 7. Bootstrap never destroys itself. It never reloads. It has no update loop.
@@ -145,7 +145,7 @@ None — Bootstrap has no UI.
 - [ ] `Bootstrap.cs` exists at `Assets/Scripts/Bootstrap.cs`
 - [ ] After launch, `GameManager.Instance` is non-null from any scene
 - [ ] After launch, `SceneLoader.Instance` is non-null from any scene
-- [ ] No script other than `Bootstrap.cs` calls `DontDestroyOnLoad` anywhere in the project
+- [ ] No script anywhere in the project calls `DontDestroyOnLoad`
 - [ ] If a second Bootstrap scene were somehow loaded, the duplicate destroys itself without error
 - [ ] `StartupScene` field is empty by default; setting it to a valid scene name causes that scene to load on Start
 

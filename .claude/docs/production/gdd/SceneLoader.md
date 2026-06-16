@@ -29,10 +29,13 @@ Scene transitions are invisible infrastructure. The player should experience the
 1. `SceneLoader.Instance` is set in `Awake`. Available from any script after Bootstrap initializes.
 2. `LoadScene(string sceneName)` is the only public method. It accepts a scene name string that must exist in Unity's Build Settings.
 3. If a load is already in progress (`_isLoading == true`), `LoadScene` logs a warning and returns immediately — the new request is silently dropped.
-4. `LoadScene` starts a private coroutine `LoadSceneRoutine(string sceneName)` which calls `SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Single)`.
-5. `LoadSceneMode.Single` replaces the current gameplay scene. The Bootstrap scene persists because its root has `DontDestroyOnLoad`.
-6. `_isLoading` is set to `true` at the start of `LoadSceneRoutine` and reset to `false` when `AsyncOperation.isDone == true`.
-7. `OnSceneLoaded` C# event (optional) fires after the async operation completes, passing the loaded scene name. Subscribers can use this to run post-load setup.
+4. `LoadScene` starts a private coroutine `LoadSceneRoutine(string sceneName)`:
+   a. If `_currentGameplayScene` is non-empty, unload it first: `SceneManager.UnloadSceneAsync(_currentGameplayScene)`, wait until `isDone`.
+   b. Load the new scene additively: `SceneManager.LoadSceneAsync(sceneName, LoadSceneMode.Additive)`, wait until `isDone`.
+   c. Set `_currentGameplayScene = sceneName`.
+5. `LoadSceneMode.Additive` — the Bootstrap scene is never replaced or unloaded. Its GameObjects persist naturally because the scene stays loaded. No `DontDestroyOnLoad` is needed.
+6. `_isLoading` is set to `true` at the start of `LoadSceneRoutine` and reset to `false` after the load completes.
+7. `OnSceneLoaded` C# event (optional) fires after the async operation completes, passing the loaded scene name.
 8. SceneLoader never calls `GameManager.SetState` — it loads scenes without imposing a game state. The caller is responsible for state management.
 9. SceneLoader never receives input and has no `Update` loop.
 
@@ -64,10 +67,12 @@ None — SceneLoader contains no calculations.
 
 | Scenario | Expected Behavior | Rationale |
 |---|---|---|
-| `LoadScene` called while already loading | Warning logged; new request dropped | Prevents race conditions from double-loads; callers should not fire load requests before checking state |
-| Scene name not in Build Settings | Unity logs an error; `AsyncOperation` fails silently; `_isLoading` resets to false via the coroutine completing | This is a configuration error — SceneLoader does not validate scene names at call time |
-| `LoadScene("")` called with empty string | Treated as invalid; log error and return without starting coroutine | Empty string would cause Unity to throw; validate before starting the load |
-| Duplicate SceneLoader instantiated | Duplicate destroys itself in Awake after detecting Instance is already set | Mirrors Bootstrap's duplicate guard |
+| `LoadScene` called while already loading | Warning logged; new request dropped | Prevents race conditions from double-loads |
+| Scene name not in Build Settings | Unity logs an error; `AsyncOperation` may fail; `_isLoading` resets to false via coroutine completing | Configuration error — SceneLoader does not validate scene names at call time |
+| `LoadScene("")` called with empty string | Log error and return without starting coroutine | Empty string would cause Unity to throw; validate before starting |
+| Duplicate SceneLoader instantiated | Duplicate destroys itself in Awake | Mirrors Bootstrap's duplicate guard |
+| First scene load (no previous scene) | `_currentGameplayScene` is empty → skip unload step; proceed directly to additive load | Normal initial load |
+| Unload of a scene that already unloaded | `UnloadSceneAsync` returns null or fails silently | Guard: null-check the unload operation before yielding on it |
 
 ---
 
