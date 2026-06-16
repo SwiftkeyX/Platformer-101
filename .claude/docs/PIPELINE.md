@@ -29,27 +29,27 @@
 ### Sub-phase B — Code (Implementation)
 
 #### Tier 1 — Foundation
-- [ ] Code: Bootstrap
-- [ ] Code: GameManager
-- [ ] Code: SceneLoader
-- [ ] Code: InputReader
-- [ ] 🧪 Test Gate 1 — Tier 1 systems compile and Bootstrap scene initializes without errors
+- [x] Code: Bootstrap
+- [x] Code: GameManager
+- [x] Code: SceneLoader
+- [x] Code: InputReader
+- [x] 🧪 Test Gate 1 — Tier 1 systems compile and Bootstrap scene initializes without errors
 
 #### Tier 2 — Core Loop
-- [ ] Code: PlayerController
-- [ ] Code: CameraController
-- [ ] Code: WorldStateManager
-- [ ] Code: KeyPickup
-- [ ] Code: Door
-- [ ] 🧪 Test Gate 2 — player can move, collect a key, and open a door end-to-end
+- [x] Code: PlayerController
+- [x] Code: CameraController
+- [x] Code: WorldStateManager
+- [x] Code: KeyPickup
+- [x] Code: Door
+- [x] 🧪 Test Gate 2 — player can move, collect a key, and open a door end-to-end
 
 #### Tier 3 — Supporting Systems
-- [ ] Code: MapSelector
-- [ ] Code: DebugOverlay
-- [ ] 🧪 Test Gate 3 — all systems working, map selectable, debug overlay visible
+- [x] Code: MapSelector
+- [x] Code: DebugOverlay
+- [x] 🧪 Test Gate 3 — all systems working, map selectable, debug overlay visible
 
-- [ ] Milestone 2 — core loop playable end-to-end (Test Gates 1 & 2 passed)
-- [ ] Milestone 3 — all features in, all test gates passed
+- [x] Milestone 2 — core loop playable end-to-end (Test Gates 1 & 2 passed)
+- [x] Milestone 3 — all features in, all test gates passed
 - [ ] Architecture pass
 
 ## Phase 3 — Beta
