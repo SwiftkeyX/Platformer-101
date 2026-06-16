@@ -1,0 +1,61 @@
+# ===== Unity generated =====
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Mm]emoryCaptures/
+[Uu]serSettings/
+ExportedObj/
+.consulo/
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+*.pidb.meta
+*.pdb.meta
+*.mdb.meta
+
+# ===== Unity auto-generated VS/Rider solution & project files =====
+*.csproj
+*.unityproj
+*.sln
+*.slnx
+*.suo
+*.tmp
+*.user
+*.userprefs
+*.pidb
+*.booproj
+ExportedObj/
+
+# ===== IDE folders =====
+.vs/
+.vscode/
+.idea/
+*.DotSettings.user
+
+# ===== OS files =====
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+Desktop.ini
+
+# ===== Asset meta files (keep these — Unity needs them) =====
+# *.meta — do NOT ignore
+
+# ===== Crashlytics =====
+crashlytics-build.properties
+
+# ===== GitHub App bot secrets — never commit =====
+.env
+*.pem
+.gh-token
