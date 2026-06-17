@@ -58,4 +58,6 @@ No files yet — Phase 3 has not started.
 
 ## Other (`other/`)
 
-No files yet.
+| File | Status | Purpose |
+|---|---|---|
+| `other/movement-reference.md` | Complete | Platformer movement technique library — C# patterns, tuning ranges, project status per technique |
