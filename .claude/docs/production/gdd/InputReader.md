@@ -6,7 +6,7 @@
 
 ## Summary
 
-InputReader is a ScriptableObject that wraps Unity's Input System. It enables an Input Action Map in `OnEnable`, subscribes to action callbacks, and fires typed C# events (`OnMove`, `OnJumpPressed`, `OnInteractPressed`) that gameplay scripts subscribe to. No gameplay script reads hardware input directly — all input flows through InputReader.
+InputReader is a ScriptableObject that wraps Unity's Input System. It enables an Input Action Map in `OnEnable`, subscribes to action callbacks, and fires typed C# events (`OnMove`, `OnJumpPressed`, `OnInteractPressed`, `OnSprintHeld`, `OnSprintReleased`, `OnDashPressed`) that gameplay scripts subscribe to. No gameplay script reads hardware input directly — all input flows through InputReader.
 
 > **Quick reference** — Layer: `Foundation` · Priority: `MVP` · Key deps: `None`
 
@@ -30,10 +30,13 @@ Controls should feel transparent — the player presses a key and the character 
 2. InputReader references the project's `InputActionAsset` via a private `[SerializeField]` field, assigned in the Inspector on the asset.
 3. `OnEnable` (called when the asset is first referenced by an enabled MonoBehaviour): enable the `Gameplay` action map and subscribe all action callbacks.
 4. `OnDisable`: unsubscribe all action callbacks and disable the `Gameplay` action map.
-5. Three public C# events are exposed:
+5. Six public C# events are exposed:
    - `event Action<Vector2> OnMove` — fired every frame while move input is non-zero; fired once with `Vector2.zero` when input is released.
    - `event Action OnJumpPressed` — fired once on the frame the jump action is pressed (`.performed` phase).
    - `event Action OnInteractPressed` — fired once on the frame the interact action is pressed (`.performed` phase).
+   - `event Action OnSprintHeld` — fired once when the sprint action enters `.performed` phase (button held down).
+   - `event Action OnSprintReleased` — fired once when the sprint action enters `.canceled` phase (button released).
+   - `event Action OnDashPressed` — fired once on the frame the dash action is pressed (`.performed` phase).
 6. InputReader never calls any method on GameManager, PlayerController, or any other system — it only fires events.
 7. Subscribers must hold a `[SerializeField] InputReader _inputReader` reference assigned in the Inspector. Never use `FindObjectOfType` or `Resources.Load` to find InputReader at runtime.
 8. All three actions must have both keyboard and gamepad bindings. Mouse-only bindings are not permitted for gameplay-critical actions.
@@ -45,6 +48,8 @@ Controls should feel transparent — the player presses a key and the character 
 | `Move` | Value (Vector2) | WASD / Arrow Keys | Left Stick | `OnMove(Vector2)` |
 | `Jump` | Button | Space | South Button (A / Cross) | `OnJumpPressed()` |
 | `Interact` | Button | E | West Button (X / Square) | `OnInteractPressed()` |
+| `Sprint` | Button (held) | Left Shift | Left Trigger | `OnSprintHeld()` / `OnSprintReleased()` |
+| `Dash` | Button | Q | East Button (B / Circle) | `OnDashPressed()` |
 
 ### States and Transitions
 
@@ -57,7 +62,7 @@ Controls should feel transparent — the player presses a key and the character 
 
 | System | Interaction |
 |---|---|
-| PlayerController | Holds a serialized `[SerializeField] InputReader` reference. Subscribes to `OnMove`, `OnJumpPressed` in `OnEnable`; unsubscribes in `OnDisable`. |
+| PlayerController | Holds a serialized `[SerializeField] InputReader` reference. Subscribes to `OnMove`, `OnJumpPressed`, `OnSprintHeld`, `OnSprintReleased`, `OnDashPressed` in `OnEnable`; unsubscribes in `OnDisable`. |
 | Any future subscriber | Same pattern — serialized reference, subscribe in OnEnable, unsubscribe in OnDisable. |
 | Unity Input System | InputReader holds the `InputActionAsset` and manages its lifecycle. No other script touches the InputActionAsset directly. |
 
@@ -167,7 +172,9 @@ None — InputReader has no UI. A rebinding UI would interact with the `InputAct
 - [ ] `OnMove` fires with `Vector2.zero` when movement keys are released
 - [ ] `OnJumpPressed` fires exactly once per Space/gamepad South press
 - [ ] `OnInteractPressed` fires exactly once per E/gamepad West press
-- [ ] All three actions have both keyboard and gamepad bindings
+- [ ] `OnSprintHeld` fires once when Left Shift / Left Trigger is pressed; `OnSprintReleased` fires once on release
+- [ ] `OnDashPressed` fires exactly once per Q/gamepad East press
+- [ ] All five actions have both keyboard and gamepad bindings
 - [ ] No gameplay script calls `Input.GetKey`, `Input.GetAxis`, or reads `InputActionAsset` directly
 
 ---
