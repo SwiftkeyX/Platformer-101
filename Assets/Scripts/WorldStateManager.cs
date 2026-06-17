@@ -66,6 +66,7 @@ public class WorldStateManager : MonoBehaviour
         Debug.Log($"[WorldStateManager] Key collected: '{keyId}'");
 #endif
 
+        // Design: one key unlocks the door with the matching id (1:1 pairing by convention).
         _unlockedDoors.Add(keyId);
         OnDoorUnlocked?.Invoke(keyId);
 

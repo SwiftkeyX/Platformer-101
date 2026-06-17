@@ -10,7 +10,6 @@ public class DebugOverlay : MonoBehaviour
     [SerializeField] private TextMeshProUGUI   _keyListText;
     [SerializeField] private TextMeshProUGUI   _doorListText;
     [SerializeField] private GameObject        _panel;
-    // Keys wired via new Input System — KeyCode fields kept for Inspector display only
     [SerializeField] private Key _toggleKey = Key.Backquote;
     [SerializeField] private Key _reloadKey = Key.R;
 

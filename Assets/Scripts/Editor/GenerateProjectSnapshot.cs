@@ -25,7 +25,7 @@ public class GenerateProjectSnapshot
         sb.AppendLine("| GameManager | Assets/Scripts/GameManager.cs | Bootstrap/GameManager |");
         sb.AppendLine("| SceneLoader | Assets/Scripts/SceneLoader.cs | Bootstrap/SceneLoader |");
         sb.AppendLine("| InputReader | Assets/Scripts/InputReader.cs | ScriptableObject — Assets/Input/InputReader.asset |");
-        sb.AppendLine("| PlayerController | Assets/Scripts/PlayerController.cs | SampleScene/Player (+ CharacterController); _inputReader → InputReader.asset, _data → PlayerData.asset, _cameraController → Main Camera |");
+        sb.AppendLine("| PlayerStateManager | Assets/Scripts/PlayerStateManager.cs | SampleScene/Player (+ CharacterController); _inputReader → InputReader.asset, _data → PlayerData.asset, _cameraController → Main Camera; pure shell — state machine host only |");
         sb.AppendLine("| PlayerData | Assets/Scripts/PlayerData.cs | ScriptableObject — Assets/Data/PlayerData.asset |");
         sb.AppendLine("| CameraController | Assets/Scripts/CameraController.cs | SampleScene/Main Camera; _playerTransform → Player, _data → CameraData.asset |");
         sb.AppendLine("| CameraData | Assets/Scripts/CameraData.cs | ScriptableObject — Assets/Data/CameraData.asset |");
@@ -39,9 +39,9 @@ public class GenerateProjectSnapshot
         sb.AppendLine("## ScriptableObject Assets");
         sb.AppendLine("| Asset | Path | Purpose |");
         sb.AppendLine("|---|---|---|");
-        sb.AppendLine("| InputReader | Assets/Input/InputReader.asset | Assign to PlayerController via [SerializeField] |");
+        sb.AppendLine("| InputReader | Assets/Input/InputReader.asset | Assign to PlayerStateManager via [SerializeField] |");
         sb.AppendLine("| GameInput (actions) | Assets/Input/GameInput.inputactions | Move/Jump/Interact bindings — WASD + gamepad |");
-        sb.AppendLine("| PlayerData | Assets/Data/PlayerData.asset | Assign to PlayerController via [SerializeField] |");
+        sb.AppendLine("| PlayerData | Assets/Data/PlayerData.asset | Assign to PlayerStateManager via [SerializeField] |");
         sb.AppendLine("| CameraData | Assets/Data/CameraData.asset | Assign to CameraController via [SerializeField] |");
         sb.AppendLine();
         sb.AppendLine("## Prefabs");
@@ -58,7 +58,7 @@ public class GenerateProjectSnapshot
         sb.AppendLine("| FixInputActions | Assets/Scripts/Editor/FixInputActions.cs | One-time fix — corrected GameInput.inputactions bindings |");
         sb.AppendLine("| RewireBootstrapScene | Assets/Scripts/Editor/RewireBootstrapScene.cs | One-time setup — rewired Bootstrap scene references |");
         sb.AppendLine("| AddWorldStateManagerToSampleScene | Assets/Scripts/Editor/AddWorldStateManagerToSampleScene.cs | One-time setup — added WorldStateManager to SampleScene |");
-        sb.AppendLine("| SetupPlayerTest | Assets/Scripts/Editor/SetupPlayerTest.cs | One-time setup — created PlayerData.asset, wired Player/PlayerController/CameraController refs |");
+        sb.AppendLine("| SetupPlayerTest | Assets/Scripts/Editor/SetupPlayerTest.cs | One-time setup — created PlayerData.asset, wired Player/PlayerStateManager/CameraController refs |");
         sb.AppendLine("| CreateCameraData | Assets/Scripts/Editor/CreateCameraData.cs | One-time setup — created CameraData.asset |");
         sb.AppendLine("| SetupKeyDoorTest | Assets/Scripts/Editor/SetupKeyDoorTest.cs | One-time setup — created Key_A (KeyPickup) and Door_A (Door) |");
         sb.AppendLine("| SetupMainMenu | Assets/Scripts/Editor/SetupMainMenu.cs | One-time setup — created MainMenu.unity, Canvas/MapSelector, EventSystem |");
