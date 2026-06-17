@@ -1,12 +1,14 @@
 # PlayerController
 
 > **Status**: Approved
-> **Last Updated**: 2026-06-16
+> **Last Updated**: 2026-06-17
 > **Implements Pillar**: Floaty · Precise · Exploratory — every movement decision serves these three words
 
 ## Summary
 
 PlayerController is a MonoBehaviour on the Player prefab that drives all 3D movement via a `CharacterController`. It reads `InputReader` events (never polls input directly), applies custom gravity each frame, and implements a floaty jump with full air control, coyote time, and jump buffering. It also handles run (sprint speed modifier), double jump (second mid-air jump), and dash (short gravity-suppressed velocity burst). It never communicates with `WorldStateManager` — key collection belongs to `KeyPickup`.
+
+PlayerController uses a **State Pattern** internally — a `PlayerStateBase` abstract class with five concrete states (Idle, Walk, Run, Airborne, Dashing). PlayerController is the host: it owns `_currentState` and routes each `Update` frame through it. Gravity, fall multiplier, ground clamp, and `CharacterController.Move` are shared steps that run in `PlayerController.Update` regardless of state; concrete states own only their per-state horizontal velocity contribution and their transition logic.
 
 > **Quick reference** — Layer: `Core` · Priority: `MVP` · Key deps: `InputReader`
 
@@ -19,6 +21,67 @@ The player character is a capsule controlled by Unity's `CharacterController` co
 ## Player Fantasy
 
 The player should feel like they're moving through the space effortlessly. Jumps feel light and floaty — the character hangs in the air for a noticeable moment before descending. Every jump lands where the player intended. The controls never fight back.
+
+---
+
+## State Pattern Architecture
+
+PlayerController is a **state machine host** — it never implements per-state behavior directly. It owns a `_currentState` reference and delegates each frame to `_currentState.Update(this)`. Transitioning state calls `SetState(PlayerStateBase next)`, which calls `OnExit` on the outgoing state, swaps the reference, and calls `OnEnter` on the incoming state.
+
+### PlayerStateBase (abstract)
+
+Located at `Assets/Scripts/Player/PlayerStateBase.cs`.
+
+```csharp
+public abstract class PlayerStateBase
+{
+    public virtual void OnEnter(PlayerController ctx) { }
+    public abstract void Update(PlayerController ctx);
+    public virtual void OnExit(PlayerController ctx) { }
+}
+```
+
+### Concrete States
+
+| Class | File | Handles |
+|---|---|---|
+| `IdleState` | `Assets/Scripts/Player/IdleState.cs` | Grounded, no horizontal input |
+| `WalkState` | `Assets/Scripts/Player/WalkState.cs` | Grounded, moving at base speed, no sprint |
+| `RunState` | `Assets/Scripts/Player/RunState.cs` | Grounded, moving, sprint held (`RunMultiplier` applied) |
+| `AirborneState` | `Assets/Scripts/Player/AirborneState.cs` | Airborne — coyote window, double jump, air control, fall multiplier |
+| `DashingState` | `Assets/Scripts/Player/DashingState.cs` | Dash duration active; horizontal velocity locked; gravity suppressed |
+
+### Shared Frame Steps (PlayerController.Update — run before `_currentState.Update`)
+
+These execute every frame regardless of state:
+
+1. Apply gravity: `_velocity.y += _gravity * Time.deltaTime` (skipped while `_isDashing`)
+2. Apply fall multiplier when descending: `_velocity.y += _gravity * (FallGravityMultiplier - 1f) * Time.deltaTime` (skipped while `_isDashing`)
+3. Ground clamp: when `isGrounded && _velocity.y < 0`, set `_velocity.y = -2f`
+4. `_currentState.Update(this)` — concrete state sets `_velocity.x` / `_velocity.z`
+5. `CharacterController.Move(_velocity * Time.deltaTime)` — always last
+
+### State Transitions
+
+| From State | Trigger | To State | Action on transition |
+|---|---|---|---|
+| Idle / Walk / Run | Jump pressed + (isGrounded or coyote timer active) | Airborne | `_velocity.y = JumpVelocity` |
+| Any grounded state | Leaves ground without jumping; `_coyoteTimer` starts | Airborne | Coyote timer runs inside AirborneState |
+| Airborne | `isGrounded == true`, no horizontal input | Idle | `_hasDoubleJump = true` |
+| Airborne | `isGrounded == true`, horizontal input, no sprint | Walk | `_hasDoubleJump = true` |
+| Airborne | `isGrounded == true`, horizontal input, sprint held | Run | `_hasDoubleJump = true` |
+| Airborne + `_hasDoubleJump` | Jump pressed | Airborne (self-loop via OnEnter) | `_velocity.y = DoubleJumpVelocity`; `_hasDoubleJump = false` |
+| Any | `OnDashPressed` + `_dashCooldown <= 0` | Dashing | `_isDashing = true`; record `_dashDir`; `_dashTimer = DashDuration` |
+| Dashing | `_dashTimer <= 0` + isGrounded, no input | Idle | `_isDashing = false`; `_dashCooldown = DashCooldown` |
+| Dashing | `_dashTimer <= 0` + isGrounded, input, no sprint | Walk | `_isDashing = false`; `_dashCooldown = DashCooldown` |
+| Dashing | `_dashTimer <= 0` + isGrounded, input, sprint | Run | `_isDashing = false`; `_dashCooldown = DashCooldown` |
+| Dashing | `_dashTimer <= 0` + airborne | Airborne | `_isDashing = false`; `_dashCooldown = DashCooldown` |
+| Idle | Horizontal input received, no sprint | Walk | — |
+| Idle | Horizontal input received, sprint held | Run | — |
+| Walk | Input stops | Idle | — |
+| Walk | Sprint pressed | Run | — |
+| Run | Input stops | Idle | — |
+| Run | Sprint released | Walk | — |
 
 ---
 
@@ -42,15 +105,17 @@ The player should feel like they're moving through the space effortlessly. Jumps
 14. **Double jump**: `_hasDoubleJump` (bool) resets to `true` on the first grounded frame each time the player lands. When a jump request fires while Airborne AND `_hasDoubleJump` is `true`: set `_velocity.y = DoubleJumpVelocity`, set `_hasDoubleJump = false`. Coyote jumps use the first-jump path and do not consume `_hasDoubleJump`. Jump buffer (`JumpBufferTime`) applies to the double jump identically to the first jump.
 15. **Dash**: `OnDashPressed` triggers a dash if `_dashCooldown <= 0`. Dash direction = current movement input direction flattened to XZ; if input is zero, fall back to `CameraController.Forward`. During dash (`_isDashing == true`), horizontal velocity is locked to `DashDirection * DashSpeed` and `_velocity.y` is held at `0` (gravity suppressed). Dash runs for `DashDuration` seconds via `_dashTimer`. On dash end, `_isDashing = false`, `_dashCooldown = DashCooldown`. `_dashCooldown` decrements by `Time.deltaTime` each frame. Dash does not consume or reset `_hasDoubleJump`.
 16. Subscribe to `OnSprintHeld`, `OnSprintReleased`, and `OnDashPressed` in `OnEnable`; unsubscribe in `OnDisable` (same pattern as existing events).
+17. **State Pattern**: PlayerController owns `_currentState` (`PlayerStateBase`) and calls `_currentState.Update(this)` each frame inside the shared-step sequence. Each concrete state owns only its horizontal velocity contribution and its transition decisions. Vertical velocity and `CharacterController.Move` are always managed by the shared steps in `PlayerController.Update`, never inside a state class.
 
 ### States and Transitions
 
-| State | Entry Condition | Exit Condition | Behavior |
-|---|---|---|---|
-| `Grounded` | `CharacterController.isGrounded == true` | Character leaves ground | Horizontal movement at full speed; coyote timer reset; `_hasDoubleJump` reset to `true` on landing; jump available |
-| `Coyote` | `isGrounded` goes false without a jump; `_coyoteTimer > 0` | `_coyoteTimer` expires OR jump fires | Jump still available; horizontal movement continues; `_hasDoubleJump` still `true` |
-| `Airborne` | Coyote timer expires OR jump fires | `isGrounded` becomes true | First jump unavailable; double jump available if `_hasDoubleJump`; air control active; fall multiplier applies during descent |
-| `Dashing` | `OnDashPressed` fires and `_dashCooldown <= 0` | `_dashTimer` expires | `_isDashing = true`; horizontal velocity locked to `DashDirection * DashSpeed`; `_velocity.y = 0` (gravity suppressed); `_dashCooldown` set to `DashCooldown` on exit |
+| State | Concrete Class | Entry Condition | Exit Condition | Behavior |
+|---|---|---|---|---|
+| `Idle` | `IdleState` | `isGrounded == true` + no horizontal input | Horizontal input received, or leaves ground | Zero horizontal velocity; coyote timer reset on entry; `_hasDoubleJump = true` on entry from air |
+| `Walk` | `WalkState` | `isGrounded == true` + horizontal input + no sprint | Input stops, sprint pressed, or leaves ground | Horizontal velocity = `moveDir * MoveSpeed`; coyote timer reset on entry |
+| `Run` | `RunState` | `isGrounded == true` + horizontal input + sprint held | Input stops, sprint released, or leaves ground | Horizontal velocity = `moveDir * MoveSpeed * RunMultiplier`; coyote timer reset on entry |
+| `Airborne` | `AirborneState` | Leaves ground without jumping (coyote); OR jump fires | `isGrounded` becomes true | Coyote window managed here (`_coyoteTimer`); double jump available if `_hasDoubleJump`; air control via `AirControlMultiplier`; fall multiplier applied by shared step |
+| `Dashing` | `DashingState` | `OnDashPressed` fires and `_dashCooldown <= 0` | `_dashTimer` expires | Horizontal velocity locked to `_dashDir * DashSpeed`; shared gravity step skipped (`_isDashing == true`); `_velocity.y = 0` each frame; `_dashCooldown = DashCooldown` on exit |
 
 ### Interactions with Other Systems
 
@@ -254,6 +319,8 @@ None — PlayerController has no UI. Health and state display are out of scope f
 ## Acceptance Criteria
 
 - [ ] `PlayerController.cs` exists at `Assets/Scripts/PlayerController.cs`
+- [ ] `PlayerStateBase.cs` exists at `Assets/Scripts/Player/PlayerStateBase.cs`
+- [ ] `IdleState.cs`, `WalkState.cs`, `RunState.cs`, `AirborneState.cs`, `DashingState.cs` exist under `Assets/Scripts/Player/`
 - [ ] `PlayerData.asset` exists at `Assets/Data/PlayerData.asset` with all tuning knobs
 - [ ] Player moves horizontally at `MoveSpeed` on flat ground
 - [ ] Diagonal movement speed equals forward movement speed (normalized input)

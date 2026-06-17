@@ -122,6 +122,16 @@ void Start() => _inputReader.OnJumpPressed += HandleJump;
 
 ---
 
+### PlayerController uses the State Pattern — states own horizontal velocity only
+
+**Rule:** `PlayerController` is a state machine host. All per-state behavior lives in a concrete `PlayerStateBase` subclass. Vertical velocity (gravity, jump, fall multiplier) and `CharacterController.Move` are shared steps in `PlayerController.Update` — never inside a state class.
+
+**Why:** Separating per-state horizontal logic from the shared vertical-physics steps keeps gravity and `CharacterController.Move` in one place and prevents state classes from accidentally fighting each other over vertical velocity.
+
+**State files:** `Assets/Scripts/Player/PlayerStateBase.cs` (abstract) + `IdleState`, `WalkState`, `RunState`, `AirborneState`, `DashingState` in the same folder.
+
+---
+
 ### Zero GC alloc per frame in steady state
 
 **Rule:** `Update`, `FixedUpdate`, and `LateUpdate` must not allocate on the managed heap during normal gameplay (no `new`, no LINQ, no string concatenation, no boxing).

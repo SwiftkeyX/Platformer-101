@@ -1,5 +1,5 @@
 # Project Snapshot Index
-Last updated: 2026-06-16
+Last updated: 2026-06-17
 
 ## Scenes
 | Scene | Path | Notes |
@@ -15,7 +15,13 @@ Last updated: 2026-06-16
 | GameManager | Assets/Scripts/GameManager.cs | Bootstrap/GameManager |
 | SceneLoader | Assets/Scripts/SceneLoader.cs | Bootstrap/SceneLoader |
 | InputReader | Assets/Scripts/InputReader.cs | ScriptableObject — Assets/Input/InputReader.asset |
-| PlayerController | Assets/Scripts/PlayerController.cs | SampleScene/Player (+ CharacterController); _inputReader → InputReader.asset, _data → PlayerData.asset, _cameraController → Main Camera |
+| PlayerController | Assets/Scripts/PlayerController.cs | SampleScene/Player (+ CharacterController); _inputReader → InputReader.asset, _data → PlayerData.asset, _cameraController → Main Camera; state machine host — delegates Update to _currentState |
+| PlayerStateBase | Assets/Scripts/Player/PlayerStateBase.cs | Abstract base — OnEnter/Update/OnExit; no scene attachment |
+| IdleState | Assets/Scripts/Player/IdleState.cs | Grounded, no input; resets _hasDoubleJump on entry |
+| WalkState | Assets/Scripts/Player/WalkState.cs | Grounded, moving at MoveSpeed; no sprint |
+| RunState | Assets/Scripts/Player/RunState.cs | Grounded, moving at MoveSpeed × RunMultiplier |
+| AirborneState | Assets/Scripts/Player/AirborneState.cs | Airborne — manages coyote window, double jump, air control |
+| DashingState | Assets/Scripts/Player/DashingState.cs | Dash active — locks horizontal to DashSpeed, suppresses gravity |
 | PlayerData | Assets/Scripts/PlayerData.cs | ScriptableObject — Assets/Data/PlayerData.asset |
 | CameraController | Assets/Scripts/CameraController.cs | SampleScene/Main Camera; _playerTransform → Player, _data → CameraData.asset |
 | CameraData | Assets/Scripts/CameraData.cs | ScriptableObject — Assets/Data/CameraData.asset |
