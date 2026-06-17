@@ -174,6 +174,8 @@ If an open PR exists, post a test comment using the bot token:
 GH_TOKEN=$(cat .gh-token) gh pr comment <number> --body "GitHub App bot identity confirmed — /setup-gh-bot complete."
 ```
 
+If this fails with `401`, the token from Step 4 already expired — re-run `python .claude/scripts/refresh-gh-token.py` and retry. Never fall back to default/personal `gh` credentials for this comment; that would defeat the point of verification.
+
 Confirm a comment URL is returned. Tell the user to check GitHub and verify the comment shows the bot name, not their personal account.
 
 If no open PR exists, skip the comment and tell the user: "No open PR found. Token is ready — verify bot identity next time you run `/reconcile-gdd`."
