@@ -122,13 +122,13 @@ void Start() => _inputReader.OnJumpPressed += HandleJump;
 
 ---
 
-### PlayerController uses the State Pattern — states own horizontal velocity only
+### PlayerController uses the State Pattern + Blackboard — states own all velocity
 
-**Rule:** `PlayerController` is a state machine host. All per-state behavior lives in a concrete `PlayerStateBase` subclass. Vertical velocity (gravity, jump, fall multiplier) and `CharacterController.Move` are shared steps in `PlayerController.Update` — never inside a state class.
+**Rule:** `PlayerController` is a state machine host. All per-frame physics lives in a concrete `PlayerStateBase` subclass — including gravity (owned by `AirborneState`), ground clamp (owned by grounded states), and horizontal movement. `PlayerController.Update()` contains no physics: it only refreshes `Board.IsGrounded`, calls `_currentState.Update(Board)`, and calls `CharacterController.Move`. A `PlayerBlackboard` holds all runtime state; states receive only the Board — never a reference to `PlayerController`.
 
-**Why:** Separating per-state horizontal logic from the shared vertical-physics steps keeps gravity and `CharacterController.Move` in one place and prevents state classes from accidentally fighting each other over vertical velocity.
+**Why:** Each state owns its full velocity so it can never accidentally conflict with another state's vertical assumption. Passing the Board instead of `PlayerController` keeps the state layer decoupled from the host and testable in isolation.
 
-**State files:** `Assets/Scripts/Player/PlayerStateBase.cs` (abstract) + `IdleState`, `WalkState`, `RunState`, `AirborneState`, `DashingState` in the same folder.
+**State files:** `Assets/Scripts/Player/PlayerStateBase.cs` (abstract) + `PlayerBlackboard.cs` + `IdleState`, `WalkState`, `RunState`, `AirborneState`, `DashingState` in the same folder.
 
 ---
 
