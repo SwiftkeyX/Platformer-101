@@ -52,7 +52,7 @@ GH_TOKEN=$(cat .gh-token 2>/dev/null) gh pr create \
   --body "<body>"
 ```
 
-Uses bot token from `.gh-token` if it exists; falls back to default `gh` credentials if not.
+If this fails with `401`, the bot token has expired (~1hr lifetime) — run `python .claude/scripts/refresh-gh-token.py` once, then retry the same command with the fresh token. **Never fall back to default/personal `gh` credentials for opening a PR** — the whole point of this skill is bot authorship. Only stop and report if the refresh script itself fails.
 
 ---
 

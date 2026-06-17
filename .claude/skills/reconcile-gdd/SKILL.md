@@ -128,7 +128,7 @@ All divergences resolved. Ask:
 > "All clear — merge PR #<N> and delete the branch? (`yes` / `no`)"
 
 On `yes`:
-1. `GH_TOKEN=$(cat .gh-token 2>/dev/null) gh pr merge <number> --merge --delete-branch`
+1. `GH_TOKEN=$(cat .gh-token 2>/dev/null) gh pr merge <number> --merge --delete-branch` — if this fails with `401`, the bot token has expired; run `python .claude/scripts/refresh-gh-token.py` once and retry with the fresh token. Never fall back to default/personal `gh` credentials for the merge.
 2. `git switch main`
 3. `git pull`
 4. Report: "Merged. `main` is up to date. Next task starts with `/start-branch`."
