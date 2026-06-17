@@ -1,6 +1,6 @@
 public class IdleState : PlayerStateBase
 {
-    public override void OnEnter(PlayerBlackboard board)
+    protected override void OnStateEnter(PlayerBlackboard board)
     {
         board.HasDoubleJump = true;
     }

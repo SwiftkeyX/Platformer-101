@@ -2,7 +2,7 @@ using UnityEngine;
 
 public class RunState : PlayerStateBase
 {
-    public override void OnEnter(PlayerBlackboard board)
+    protected override void OnStateEnter(PlayerBlackboard board)
     {
         board.HasDoubleJump = true;
     }
@@ -45,12 +45,8 @@ public class RunState : PlayerStateBase
 
     private static void ApplyMove(PlayerBlackboard board)
     {
-        Vector3 forward = board.CameraCtrl != null ? board.CameraCtrl.Forward : Vector3.forward;
-        Vector3 right   = new Vector3(forward.z, 0f, -forward.x);
-        Vector3 move    = forward * board.MoveInput.y + right * board.MoveInput.x;
-        if (move.sqrMagnitude > 1f) move.Normalize();
-
-        float speed = board.Data.MoveSpeed * board.Data.RunMultiplier;
+        Vector3 move     = board.MoveDirection();
+        float   speed    = board.Data.MoveSpeed * board.Data.RunMultiplier;
         board.Velocity.x = move.x * speed;
         board.Velocity.z = move.z * speed;
     }

@@ -45,12 +45,8 @@ public class AirborneState : PlayerStateBase
         }
 
         // Air-control horizontal movement
-        Vector3 forward = board.CameraCtrl != null ? board.CameraCtrl.Forward : Vector3.forward;
-        Vector3 right   = new Vector3(forward.z, 0f, -forward.x);
-        Vector3 move    = forward * board.MoveInput.y + right * board.MoveInput.x;
-        if (move.sqrMagnitude > 1f) move.Normalize();
-
-        float speed = board.Data.MoveSpeed * board.Data.AirControlMultiplier;
+        Vector3 move     = board.MoveDirection();
+        float   speed    = board.Data.MoveSpeed * board.Data.AirControlMultiplier;
         board.Velocity.x = move.x * speed;
         board.Velocity.z = move.z * speed;
     }
