@@ -32,6 +32,21 @@ public class InputReader : ScriptableObject
     /// </summary>
     public event Action OnInteractPressed;
 
+    /// <summary>
+    /// Fired when the sprint button is held (performed phase — Left Shift / Left Trigger).
+    /// </summary>
+    public event Action OnSprintHeld;
+
+    /// <summary>
+    /// Fired when the sprint button is released (canceled phase).
+    /// </summary>
+    public event Action OnSprintReleased;
+
+    /// <summary>
+    /// Fired exactly once on the frame the dash action is pressed (performed phase — Q / East Button).
+    /// </summary>
+    public event Action OnDashPressed;
+
     // ── Inspector-assigned asset ───────────────────────────────────────────────
     [SerializeField] private InputActionAsset _inputActions;
 
@@ -40,6 +55,8 @@ public class InputReader : ScriptableObject
     private InputAction    _moveAction;
     private InputAction    _jumpAction;
     private InputAction    _interactAction;
+    private InputAction    _sprintAction;
+    private InputAction    _dashAction;
 
     // ── Lifecycle ──────────────────────────────────────────────────────────────
     private void OnEnable()
@@ -61,6 +78,8 @@ public class InputReader : ScriptableObject
         _moveAction     = _gameplayMap.FindAction("Move");
         _jumpAction     = _gameplayMap.FindAction("Jump");
         _interactAction = _gameplayMap.FindAction("Interact");
+        _sprintAction   = _gameplayMap.FindAction("Sprint");
+        _dashAction     = _gameplayMap.FindAction("Dash");
 
         if (_moveAction == null || _jumpAction == null || _interactAction == null)
         {
@@ -68,10 +87,25 @@ public class InputReader : ScriptableObject
             return;
         }
 
+        if (_sprintAction == null)
+            Debug.LogWarning("[InputReader] 'Sprint' action not found in Gameplay map. Sprint will not work.");
+
+        if (_dashAction == null)
+            Debug.LogWarning("[InputReader] 'Dash' action not found in Gameplay map. Dash will not work.");
+
         _moveAction.performed     += HandleMove;
         _moveAction.canceled      += HandleMove;
         _jumpAction.performed     += HandleJump;
         _interactAction.performed += HandleInteract;
+
+        if (_sprintAction != null)
+        {
+            _sprintAction.performed += HandleSprintHeld;
+            _sprintAction.canceled  += HandleSprintReleased;
+        }
+
+        if (_dashAction != null)
+            _dashAction.performed += HandleDash;
 
         _gameplayMap.Enable();
     }
@@ -84,6 +118,15 @@ public class InputReader : ScriptableObject
         _moveAction.canceled      -= HandleMove;
         _jumpAction.performed     -= HandleJump;
         _interactAction.performed -= HandleInteract;
+
+        if (_sprintAction != null)
+        {
+            _sprintAction.performed -= HandleSprintHeld;
+            _sprintAction.canceled  -= HandleSprintReleased;
+        }
+
+        if (_dashAction != null)
+            _dashAction.performed -= HandleDash;
 
         _gameplayMap.Disable();
     }
@@ -102,5 +145,20 @@ public class InputReader : ScriptableObject
     private void HandleInteract(InputAction.CallbackContext ctx)
     {
         OnInteractPressed?.Invoke();
+    }
+
+    private void HandleSprintHeld(InputAction.CallbackContext ctx)
+    {
+        OnSprintHeld?.Invoke();
+    }
+
+    private void HandleSprintReleased(InputAction.CallbackContext ctx)
+    {
+        OnSprintReleased?.Invoke();
+    }
+
+    private void HandleDash(InputAction.CallbackContext ctx)
+    {
+        OnDashPressed?.Invoke();
     }
 }
