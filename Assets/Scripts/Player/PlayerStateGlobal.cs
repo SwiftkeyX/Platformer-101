@@ -1,7 +1,7 @@
 using System;
 using UnityEngine;
 
-public class PlayerBlackboard
+public class PlayerStateGlobal
 {
     // ── Runtime state ──────────────────────────────────────────────────────────
     public Vector3 Velocity;
@@ -10,11 +10,15 @@ public class PlayerBlackboard
     public float   JumpBufferTimer;
     public bool    HasDoubleJump;
     public float   DashCooldownTimer;
-    public float   DashTimer;
+    public float   DashActiveTimer;   // counts down while a dash is in progress
     public Vector3 DashDirection;
+    public bool    DashRequested;
 
     // ── Per-frame engine snapshot (refreshed by PlayerStateManager each Update) ──
     public bool IsGrounded;
+
+    // ── Computed properties ────────────────────────────────────────────────────
+    public bool IsJumpBuffer => JumpBufferTimer > 0f;
 
     // ── Read-only refs (set once at construction) ──────────────────────────────
     public InputReader      Input;
@@ -24,20 +28,46 @@ public class PlayerBlackboard
     // ── State machine hook ─────────────────────────────────────────────────────
     public Action<PlayerStateBase> SwitchState;
 
+    // ── Pre-allocated state roster ─────────────────────────────────────────────
+    public IdleState     Idle;
+    public WalkState     Walk;
+    public RunState      Run;
+    public AirborneState Airborne;
+    public DashingState  Dashing;
+
     // ── Per-frame tick (called by PlayerStateBase.Update) ─────────────────────
     public void Update()
+    {
+        TickJumpBuffer();
+        TickDashCooldown();
+    }
+
+    private void TickJumpBuffer()
     {
         if (JumpBufferTimer > 0f)
         {
             JumpBufferTimer -= Time.deltaTime;
             if (JumpBufferTimer < 0f) JumpBufferTimer = 0f;
         }
+    }
 
+    private void TickDashCooldown()
+    {
         if (DashCooldownTimer > 0f)
         {
             DashCooldownTimer -= Time.deltaTime;
             if (DashCooldownTimer < 0f) DashCooldownTimer = 0f;
         }
+    }
+
+    // ── Dash request ───────────────────────────────────────────────────────────
+    public void RequestDash()
+    {
+        if (DashCooldownTimer > 0f || DashActiveTimer > 0f) return;
+        DashDirection = MoveInput.sqrMagnitude > 0.01f
+            ? MoveDirection()
+            : (CameraCtrl != null ? CameraCtrl.Forward : Vector3.forward);
+        DashRequested = true;
     }
 
     // ── Movement helpers ───────────────────────────────────────────────────────

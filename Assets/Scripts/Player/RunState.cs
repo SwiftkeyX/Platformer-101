@@ -2,52 +2,58 @@ using UnityEngine;
 
 public class RunState : PlayerStateBase
 {
-    protected override void OnStateEnter(PlayerBlackboard board)
+    protected override void OnStateEnter()
     {
-        board.HasDoubleJump = true;
+        _global.HasDoubleJump = true;
     }
 
-    public override void Update(PlayerBlackboard board)
+    public override void Update()
     {
-        if (board.IsGrounded && board.Velocity.y < 0f)
-            board.Velocity.y = -2f;
+        if (_global.IsGrounded && _global.Velocity.y < 0f)
+            _global.Velocity.y = -2f;
 
-        base.Update(board);
-
-        ApplyMove(board);
+        base.Update();
+        ApplyMove();
     }
 
-    protected override void CheckSwitchState(PlayerBlackboard board)
+    protected override void CheckSwitchState()
     {
-        if (!board.IsGrounded)
+        if (_global.DashRequested)
         {
-            board.SwitchState(new AirborneState(board.Data.CoyoteTime));
+            _global.DashRequested = false;
+            _global.SwitchState(_global.Dashing);
             return;
         }
 
-        if (board.JumpBufferTimer > 0f)
+        if (!_global.IsGrounded)
         {
-            board.Velocity.y      = board.Data.JumpVelocity;
-            board.JumpBufferTimer = 0f;
-            board.SwitchState(new AirborneState(0f));
+            _global.SwitchState(_global.Airborne.Configure(JumpType.Coyote));
             return;
         }
 
-        if (!board.IsSprinting)
+        if (_global.IsJumpBuffer)
         {
-            board.SwitchState(new WalkState());
+            _global.Velocity.y      = _global.Data.JumpVelocity;
+            _global.JumpBufferTimer = 0f;
+            _global.SwitchState(_global.Airborne.Configure(JumpType.Buffered));
             return;
         }
 
-        if (board.MoveInput.sqrMagnitude <= 0.01f)
-            board.SwitchState(new IdleState());
+        if (!_global.IsSprinting)
+        {
+            _global.SwitchState(_global.Walk);
+            return;
+        }
+
+        if (_global.MoveInput.sqrMagnitude <= 0.01f)
+            _global.SwitchState(_global.Idle);
     }
 
-    private static void ApplyMove(PlayerBlackboard board)
+    private void ApplyMove()
     {
-        Vector3 move     = board.MoveDirection();
-        float   speed    = board.Data.MoveSpeed * board.Data.RunMultiplier;
-        board.Velocity.x = move.x * speed;
-        board.Velocity.z = move.z * speed;
+        Vector3 move       = _global.MoveDirection();
+        float   speed      = _global.Data.MoveSpeed * _global.Data.RunMultiplier;
+        _global.Velocity.x = move.x * speed;
+        _global.Velocity.z = move.z * speed;
     }
 }

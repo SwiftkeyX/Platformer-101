@@ -1,38 +1,45 @@
 public class IdleState : PlayerStateBase
 {
-    protected override void OnStateEnter(PlayerBlackboard board)
+    protected override void OnStateEnter()
     {
-        board.HasDoubleJump = true;
+        _global.HasDoubleJump = true;
     }
 
-    public override void Update(PlayerBlackboard board)
+    public override void Update()
     {
-        if (board.IsGrounded && board.Velocity.y < 0f)
-            board.Velocity.y = -2f;
+        if (_global.IsGrounded && _global.Velocity.y < 0f)
+            _global.Velocity.y = -2f;
 
-        board.Velocity.x = 0f;
-        board.Velocity.z = 0f;
+        _global.Velocity.x = 0f;
+        _global.Velocity.z = 0f;
 
-        base.Update(board);
+        base.Update();
     }
 
-    protected override void CheckSwitchState(PlayerBlackboard board)
+    protected override void CheckSwitchState()
     {
-        if (!board.IsGrounded)
+        if (_global.DashRequested)
         {
-            board.SwitchState(new AirborneState(board.Data.CoyoteTime));
+            _global.DashRequested = false;
+            _global.SwitchState(_global.Dashing);
             return;
         }
 
-        if (board.JumpBufferTimer > 0f)
+        if (!_global.IsGrounded)
         {
-            board.Velocity.y      = board.Data.JumpVelocity;
-            board.JumpBufferTimer = 0f;
-            board.SwitchState(new AirborneState(0f));
+            _global.SwitchState(_global.Airborne.Configure(JumpType.Coyote));
             return;
         }
 
-        if (board.MoveInput.sqrMagnitude > 0.01f)
-            board.SwitchState(board.IsSprinting ? (PlayerStateBase)new RunState() : new WalkState());
+        if (_global.IsJumpBuffer)
+        {
+            _global.Velocity.y      = _global.Data.JumpVelocity;
+            _global.JumpBufferTimer = 0f;
+            _global.SwitchState(_global.Airborne.Configure(JumpType.Buffered));
+            return;
+        }
+
+        if (_global.MoveInput.sqrMagnitude > 0.01f)
+            _global.SwitchState(_global.IsSprinting ? (PlayerStateBase)_global.Run : _global.Walk);
     }
 }
