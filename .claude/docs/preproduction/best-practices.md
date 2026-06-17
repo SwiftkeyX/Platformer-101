@@ -122,6 +122,16 @@ void Start() => _inputReader.OnJumpPressed += HandleJump;
 
 ---
 
+### PlayerController uses the State Pattern + Blackboard — states own all velocity
+
+**Rule:** `PlayerController` is a state machine host. All per-frame physics lives in a concrete `PlayerStateBase` subclass — including gravity (owned by `AirborneState`), ground clamp (owned by grounded states), and horizontal movement. `PlayerController.Update()` contains no physics: it only refreshes `Board.IsGrounded`, calls `_currentState.Update(Board)`, and calls `CharacterController.Move`. A `PlayerBlackboard` holds all runtime state; states receive only the Board — never a reference to `PlayerController`.
+
+**Why:** Each state owns its full velocity so it can never accidentally conflict with another state's vertical assumption. Passing the Board instead of `PlayerController` keeps the state layer decoupled from the host and testable in isolation.
+
+**State files:** `Assets/Scripts/Player/PlayerStateBase.cs` (abstract) + `PlayerBlackboard.cs` + `IdleState`, `WalkState`, `RunState`, `AirborneState`, `DashingState` in the same folder.
+
+---
+
 ### Zero GC alloc per frame in steady state
 
 **Rule:** `Update`, `FixedUpdate`, and `LateUpdate` must not allocate on the managed heap during normal gameplay (no `new`, no LINQ, no string concatenation, no boxing).

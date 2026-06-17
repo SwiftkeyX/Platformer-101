@@ -37,7 +37,7 @@ public static class SetupPlayerTest
         Debug.Log("[SetupPlayerTest] Bootstrap._startupScene = SampleScene");
     }
 
-    // Step B: add CharacterController and PlayerController to existing Player GO,
+    // Step B: add CharacterController and PlayerStateManager to existing Player GO,
     //         wire references. Run after the Player is already in the scene.
     public static void WirePlayerReferences()
     {
@@ -64,9 +64,9 @@ public static class SetupPlayerTest
         }
         if (playerGO == null) { Debug.LogError("[SetupPlayerTest] No 'Player' GO found in active scene."); return; }
 
-        // Wire PlayerController serialized refs only (CharacterController added via MCP)
-        PlayerController pc = playerGO.GetComponent<PlayerController>();
-        if (pc == null) { Debug.LogError("[SetupPlayerTest] PlayerController component not found on Player."); return; }
+        // Wire PlayerStateManager serialized refs only (CharacterController added via MCP)
+        PlayerStateManager pc = playerGO.GetComponent<PlayerStateManager>();
+        if (pc == null) { Debug.LogError("[SetupPlayerTest] PlayerStateManager component not found on Player."); return; }
         var so = new SerializedObject(pc);
         so.FindProperty("_inputReader").objectReferenceValue = inputReader;
         so.FindProperty("_data").objectReferenceValue = playerData;
@@ -75,6 +75,6 @@ public static class SetupPlayerTest
 
         EditorSceneManager.MarkSceneDirty(scene);
         EditorSceneManager.SaveScene(scene);
-        Debug.Log("[SetupPlayerTest] PlayerController references wired.");
+        Debug.Log("[SetupPlayerTest] PlayerStateManager references wired.");
     }
 }

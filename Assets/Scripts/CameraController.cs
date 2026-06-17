@@ -59,7 +59,7 @@ public class CameraController : MonoBehaviour
         transform.position = Vector3.Lerp(transform.position, orbitTarget, _data.FollowSmoothing * Time.deltaTime);
         transform.LookAt(playerPivot);
 
-        // Expose XZ-plane forward/right for PlayerController camera-relative movement
+        // Expose XZ-plane forward/right for PlayerStateManager camera-relative movement
         Vector3 f = transform.forward;
         f.y = 0f;
         if (f.sqrMagnitude > 0.001f)
